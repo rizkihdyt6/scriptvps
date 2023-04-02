@@ -94,7 +94,7 @@ function base_package() {
     sudo apt install software-properties-common -y
     sudo add-apt-repository ppa:vbernat/haproxy-2.7 -y
     sudo apt update && apt upgrade -y
-    linux-tools-common util-linux  \
+    # linux-tools-common util-linux  \
     sudo apt install squid nginx zip pwgen openssl netcat bash-completion  \
     curl socat xz-utils wget apt-transport-https dnsutils socat chrony \
     tar wget curl ruby zip unzip p7zip-full python3-pip haproxy libc6  gnupg gnupg2 gnupg1 \
@@ -179,12 +179,14 @@ function install_xray(){
     print_install "Memasang modul Xray terbaru"
     curl -s ipinfo.io/city >> /etc/xray/city
     curl -s ipinfo.io/org | cut -d " " -f 2-10 >> /etc/xray/isp
-    xray_latest="$(curl -s https://api.github.com/repos/dharak36/Xray-core/releases | grep tag_name | sed -E 's/.*"v(.*)".*/\1/' | head -n 1)"
-    xraycore_link="https://github.com/dharak36/Xray-core/releases/download/v$xray_latest/xray.linux.64bit"
-    curl -sL "$xraycore_link" -o xray
-#    unzip -q xray.zip && rm -rf xray.zip
-    mv xray /usr/sbin/xray
-    print_success "Xray Core"
+    latest_version="$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases | grep tag_name | sed -E 's/.*"v(.*)".*/\1/' | head -n 1)"
+    xraycore_link="xraycore_link="https://github.com/XTLS/Xray-core/releases/download/v$latest_version/xray-linux-64.zip"
+    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u www-data --version $latest_version >/dev/null 2>&1
+    cd `mktemp -d`
+    curl -sL "$xraycore_link" -o xray.zip
+    unzip -q xray.zip && rm -rf xray.zip
+    mv xray /usr/local/bin/xray
+    chmod +x /usr/local/bin/xray
     
     cat /etc/xray/xray.crt /etc/xray/xray.key | tee /etc/haproxy/xray.pem
     wget -O /etc/xray/config.json "${REPO}xray/config.json" >/dev/null 2>&1 
@@ -375,7 +377,7 @@ function tambahan(){
     sed -i '$ i\/swapfile      swap swap   defaults    0 0' /etc/fstab
 
     # > Singkronisasi jam
-    chronyd -q 'server 0.id.pool.ntp.org iburst'
+    # chronyd -q 'server 0.id.pool.ntp.org iburst'
     chronyc sourcestats -v
     chronyc tracking -v
 
@@ -390,9 +392,9 @@ account default
 host smtp.gmail.com
 port 587
 auth on
-user dikitubis9@gmail.com
-from dikitubis9@gmail.com
-password rizki12345
+user taibabihutan17@gmail.com
+from taibabihutan17@gmail.com
+password romanisti
 logfile ~/.msmtp.log
 EOF
 
@@ -417,10 +419,10 @@ touch /root/.install.log
 cat >/root/tmp <<-END
 #!/bin/bash
 #vps
-### RizkiHdytTunnel $TANGGAL $MYIP
+### Geostoretunnel $TANGGAL $MYIP
 END
 ####
-RIZKIHDYTROJECT() {
+GEOPROJECT() {
     data=($(cat /root/tmp | grep -E "^### " | awk '{print $2}'))
     for user in "${data[@]}"; do
         exp=($(grep -E "^### $user" "/root/tmp" | awk '{print $3}'))
@@ -468,8 +470,8 @@ sleep 4
 
 function install_all() {
     base_package
-    dir_xray
-    add_domain
+    # dir_xray
+    # add_domain
     pasang_ssl 
     install_xray >> /root/install.log
     install_ovpn >> /root/install.log
@@ -494,7 +496,7 @@ function finish(){
 "
     curl -s --max-time $TIMES -d "chat_id=$CHATID&disable_web_page_preview=1&text=$TEXT&parse_mode=html" $URL >/dev/null
     cp /etc/openvpn/*.ovpn /var/www/html/
-    sed -i "s/xxx/${domain}/g" /var/www/html/index.html
+    # sed -i "s/xxx/${domain}/g" /var/www/html/index.html
     sed -i "s/xxx/${domain}/g" /etc/haproxy/haproxy.cfg
     sed -i "s/xxx/${MYIP}/g" /etc/squid/squid.conf
     chown -R www-data:www-data /etc/msmtprc
