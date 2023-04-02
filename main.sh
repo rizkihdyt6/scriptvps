@@ -94,7 +94,7 @@ function base_package() {
     sudo apt install software-properties-common -y
     sudo add-apt-repository ppa:vbernat/haproxy-2.7 -y
     sudo apt update && apt upgrade -y
-    # linux-tools-common util-linux  \
+    linux-tools-common util-linux  \
     sudo apt install squid nginx zip pwgen openssl netcat bash-completion  \
     curl socat xz-utils wget apt-transport-https dnsutils socat chrony \
     tar wget curl ruby zip unzip p7zip-full python3-pip haproxy libc6  gnupg gnupg2 gnupg1 \
@@ -179,11 +179,10 @@ function install_xray(){
     print_install "Memasang modul Xray terbaru"
     curl -s ipinfo.io/city >> /etc/xray/city
     curl -s ipinfo.io/org | cut -d " " -f 2-10 >> /etc/xray/isp
-    xray_latest="$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases | grep tag_name | sed -E 's/.*"v(.*)".*/\1/' | head -n 1)"
-    xraycore_link="https://github.com/XTLS/Xray-core/releases/download/v$latest_version/xray-linux-64.zip"
-    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u www-data --version $latest_version >/dev/null 2>&1
+    xray_latest="$(curl -s https://api.github.com/repos/dharak36/Xray-core/releases | grep tag_name | sed -E 's/.*"v(.*)".*/\1/' | head -n 1)"
+    xraycore_link="https://github.com/dharak36/Xray-core/releases/download/v$xray_latest/xray.linux.64bit"
     curl -sL "$xraycore_link" -o xray
-    unzip -q xray.zip && rm -rf xray.zip
+#    unzip -q xray.zip && rm -rf xray.zip
     mv xray /usr/sbin/xray
     print_success "Xray Core"
     
@@ -262,7 +261,7 @@ function download_config(){
     wget -O /etc/nginx/conf.d/geostore.conf "${REPO}config/geovpn.conf" >/dev/null 2>&1
     sed -i "s/xxx/${domain}/g" /etc/nginx/conf.d/geostore.conf
     wget -O /etc/nginx/nginx.conf "${REPO}config/nginx.conf" >/dev/null 2>&1
-    curl "${REPO}caddy/install.sh" | bash 
+    # curl "${REPO}caddy/install.sh" | bash 
     wget -q -O /etc/squid/squid.conf "${REPO}config/squid.conf" >/dev/null 2>&1
     echo "visible_hostname $(cat /etc/xray/domain)" /etc/squid/squid.conf
     mkdir -p /var/log/squid/cache/
@@ -353,21 +352,21 @@ function tambahan(){
     wget -O /usr/sbin/speedtest "${REPO}bin/speedtest" >/dev/null 2>&1
     chmod +x /usr/sbin/speedtest
 
-     pasang gotop
+    # > pasang gotop
     gotop_latest="$(curl -s https://api.github.com/repos/xxxserxxx/gotop/releases | grep tag_name | sed -E 's/.*"v(.*)".*/\1/' | head -n 1)"
     gotop_link="https://github.com/xxxserxxx/gotop/releases/download/v$gotop_latest/gotop_v"$gotop_latest"_linux_amd64.deb"
     curl -sL "$gotop_link" -o /tmp/gotop.deb
     dpkg -i /tmp/gotop.deb >/dev/null 2>&1
 
-     Pasang Limit
+    # > Pasang Limit
     wget -qO /tmp/limit.sh "${REPO}limit/limit.sh" >/dev/null 2>&1
     chmod +x /tmp/limit.sh && bash /tmp/limit.sh >/dev/null 2>&1
 
-     Pasang BBR Plus
+    # > Pasang BBR Plus
     wget -qO /tmp/bbr.sh "${REPO}server/bbr.sh" >/dev/null 2>&1
     chmod +x /tmp/bbr.sh && bash /tmp/bbr.sh
 
-      Buat swap sebesar 1G
+    # > Buat swap sebesar 1G
     dd if=/dev/zero of=/swapfile bs=1024 count=1048576
     mkswap /swapfile
     chown root:root /swapfile
@@ -375,12 +374,12 @@ function tambahan(){
     swapon /swapfile >/dev/null 2>&1
     sed -i '$ i\/swapfile      swap swap   defaults    0 0' /etc/fstab
 
-     Singkronisasi jam
-     chronyd -q 'server 0.id.pool.ntp.org iburst'
+    # > Singkronisasi jam
+    chronyd -q 'server 0.id.pool.ntp.org iburst'
     chronyc sourcestats -v
     chronyc tracking -v
 
-     Tuned Device
+    # > Tuned Device
     tuned-adm profile network-latency
     cat >/etc/msmtprc <<EOF
 defaults
@@ -416,12 +415,12 @@ echo "INSTALLING SCRIPT..."
 
 touch /root/.install.log
 cat >/root/tmp <<-END
-!/bin/bash
-vps
-RizkiHdytTunnel $TANGGAL $MYIP
+#!/bin/bash
+#vps
+### RizkiHdytTunnel $TANGGAL $MYIP
 END
 ####
-RIZKIHDYTPROJECT() {
+RIZKIHDYTROJECT() {
     data=($(cat /root/tmp | grep -E "^### " | awk '{print $2}'))
     for user in "${data[@]}"; do
         exp=($(grep -E "^### $user" "/root/tmp" | awk '{print $3}'))
@@ -555,7 +554,7 @@ echo ""
 
 }
 cd /tmp
-RIZKIHDYT
+GEOPROJECT
 first_setup
 dir_xray
 add_domain
