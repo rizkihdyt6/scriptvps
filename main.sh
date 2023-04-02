@@ -111,11 +111,11 @@ clear
 function dir_xray() {
     print_install "Membuat direktori xray"
     mkdir -p /etc/{xray,vmess,websocket,vless,trojan,shadowsocks}
-    # mkdir -p /usr/sbin/xray/
+    mkdir -p /usr/sbin/xray/
     mkdir -p /var/log/xray/
     mkdir -p /var/www/html/
     mkdir -p /etc/rizkihdyt/
-#    chmod +x /var/log/xray
+    chmod +x /var/log/xray
     touch /var/log/xray/{access.log,error.log}
     chmod 777 /var/log/xray/*.log
     touch /etc/vmess/.vmess.db
@@ -183,13 +183,13 @@ function install_xray(){
     xraycore_link="https://github.com/XTLS/Xray-core/releases/download/v$latest_version/xray-linux-64.zip"
     bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u www-data --version $latest_version >/dev/null 2>&1
     curl -sL "$xraycore_link" -o xray
-#    unzip -q xray.zip && rm -rf xray.zip
+    unzip -q xray.zip && rm -rf xray.zip
     mv xray /usr/sbin/xray
     print_success "Xray Core"
     
     cat /etc/xray/xray.crt /etc/xray/xray.key | tee /etc/haproxy/xray.pem
     wget -O /etc/xray/config.json "${REPO}xray/config.json" >/dev/null 2>&1 
-    #wget -O /usr/sbin/xray/ "${REPO}bin/xray" >/dev/null 2>&1
+    wget -O /usr/sbin/xray/ "${REPO}bin/xray" >/dev/null 2>&1
     wget -O /usr/sbin/websocket "${REPO}bin/ws" >/dev/null 2>&1
     wget -O /etc/websocket/tun.conf "${REPO}xray/tun.conf" >/dev/null 2>&1 
     wget -O /etc/systemd/system/ws.service "${REPO}xray/ws.service" >/dev/null 2>&1 
@@ -262,7 +262,7 @@ function download_config(){
     wget -O /etc/nginx/conf.d/geostore.conf "${REPO}config/geovpn.conf" >/dev/null 2>&1
     sed -i "s/xxx/${domain}/g" /etc/nginx/conf.d/geostore.conf
     wget -O /etc/nginx/nginx.conf "${REPO}config/nginx.conf" >/dev/null 2>&1
-    # curl "${REPO}caddy/install.sh" | bash 
+    curl "${REPO}caddy/install.sh" | bash 
     wget -q -O /etc/squid/squid.conf "${REPO}config/squid.conf" >/dev/null 2>&1
     echo "visible_hostname $(cat /etc/xray/domain)" /etc/squid/squid.conf
     mkdir -p /var/log/squid/cache/
@@ -353,21 +353,21 @@ function tambahan(){
     wget -O /usr/sbin/speedtest "${REPO}bin/speedtest" >/dev/null 2>&1
     chmod +x /usr/sbin/speedtest
 
-    # > pasang gotop
+     pasang gotop
     gotop_latest="$(curl -s https://api.github.com/repos/xxxserxxx/gotop/releases | grep tag_name | sed -E 's/.*"v(.*)".*/\1/' | head -n 1)"
     gotop_link="https://github.com/xxxserxxx/gotop/releases/download/v$gotop_latest/gotop_v"$gotop_latest"_linux_amd64.deb"
     curl -sL "$gotop_link" -o /tmp/gotop.deb
     dpkg -i /tmp/gotop.deb >/dev/null 2>&1
 
-    # > Pasang Limit
+     Pasang Limit
     wget -qO /tmp/limit.sh "${REPO}limit/limit.sh" >/dev/null 2>&1
     chmod +x /tmp/limit.sh && bash /tmp/limit.sh >/dev/null 2>&1
 
-    # > Pasang BBR Plus
+     Pasang BBR Plus
     wget -qO /tmp/bbr.sh "${REPO}server/bbr.sh" >/dev/null 2>&1
     chmod +x /tmp/bbr.sh && bash /tmp/bbr.sh
 
-    # > Buat swap sebesar 1G
+      Buat swap sebesar 1G
     dd if=/dev/zero of=/swapfile bs=1024 count=1048576
     mkswap /swapfile
     chown root:root /swapfile
@@ -375,12 +375,12 @@ function tambahan(){
     swapon /swapfile >/dev/null 2>&1
     sed -i '$ i\/swapfile      swap swap   defaults    0 0' /etc/fstab
 
-    # > Singkronisasi jam
-    # chronyd -q 'server 0.id.pool.ntp.org iburst'
+     Singkronisasi jam
+     chronyd -q 'server 0.id.pool.ntp.org iburst'
     chronyc sourcestats -v
     chronyc tracking -v
 
-    # > Tuned Device
+     Tuned Device
     tuned-adm profile network-latency
     cat >/etc/msmtprc <<EOF
 defaults
@@ -391,9 +391,9 @@ account default
 host smtp.gmail.com
 port 587
 auth on
-user taibabihutan17@gmail.com
-from taibabihutan17@gmail.com
-password romanisti
+user dikitubis9@gmail.com
+from dikitubis9@gmail.com
+password rizki12345
 logfile ~/.msmtp.log
 EOF
 
@@ -416,12 +416,12 @@ echo "INSTALLING SCRIPT..."
 
 touch /root/.install.log
 cat >/root/tmp <<-END
-#!/bin/bash
-#vps
-### Geostoretunnel $TANGGAL $MYIP
+!/bin/bash
+vps
+RizkiHdytTunnel $TANGGAL $MYIP
 END
 ####
-GEOPROJECT() {
+RIZKIHDYTPROJECT() {
     data=($(cat /root/tmp | grep -E "^### " | awk '{print $2}'))
     for user in "${data[@]}"; do
         exp=($(grep -E "^### $user" "/root/tmp" | awk '{print $3}'))
@@ -469,8 +469,8 @@ sleep 4
 
 function install_all() {
     base_package
-    # dir_xray
-    # add_domain
+    dir_xray
+    add_domain
     pasang_ssl 
     install_xray >> /root/install.log
     install_ovpn >> /root/install.log
@@ -495,7 +495,7 @@ function finish(){
 "
     curl -s --max-time $TIMES -d "chat_id=$CHATID&disable_web_page_preview=1&text=$TEXT&parse_mode=html" $URL >/dev/null
     cp /etc/openvpn/*.ovpn /var/www/html/
-    # sed -i "s/xxx/${domain}/g" /var/www/html/index.html
+    sed -i "s/xxx/${domain}/g" /var/www/html/index.html
     sed -i "s/xxx/${domain}/g" /etc/haproxy/haproxy.cfg
     sed -i "s/xxx/${MYIP}/g" /etc/squid/squid.conf
     chown -R www-data:www-data /etc/msmtprc
@@ -555,7 +555,7 @@ echo ""
 
 }
 cd /tmp
-GEOPROJECT
+RIZKIHDYT
 first_setup
 dir_xray
 add_domain
