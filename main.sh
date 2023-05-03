@@ -29,8 +29,8 @@ TIME=$(date +'%Y-%m-%d %H:%M:%S')
 RAMMS=$(free -m | awk 'NR==2 {print $2}')
 KEY="6003347945:AAHv1Ti4HQliYwpYm8sbKrriDkSMqqJLUqE"
 URL="https://api.telegram.org/bot$KEY/sendMessage"
-REPO="https://raw.githubusercontent.com/rizkihdyt6/scriptvps/master"
-CDNF="https://raw.githubusercontent.com/rizkihdyt6/scriptvps/master"
+REPO="https://raw.githubusercontent.com/rizkihdyt6/scupdate/rizki/"
+CDNF="https://raw.githubusercontent.com/rizkihdyt6/scupdate/rizki"
 APT="apt-get -y install "
 domain=$(cat /root/domain)
 start=$(date +%s)
@@ -94,7 +94,7 @@ function base_package() {
     sudo apt install software-properties-common -y
     sudo add-apt-repository ppa:vbernat/haproxy-2.7 -y
     sudo apt update && apt upgrade -y
-    #linux-tools-common util-linux  \
+    # linux-tools-common util-linux  \
     sudo apt install squid nginx zip pwgen openssl netcat bash-completion  \
     curl socat xz-utils wget apt-transport-https dnsutils socat chrony \
     tar wget curl ruby zip unzip p7zip-full python3-pip haproxy libc6  gnupg gnupg2 gnupg1 \
@@ -102,6 +102,7 @@ function base_package() {
     net-tools  jq openvpn easy-rsa python3-certbot-nginx p7zip-full tuned fail2ban -y
     apt-get clean all; sudo apt-get autoremove -y
     apt-get install lolcat -y
+    apt-get install vnstat -y
     gem install lolcat
     print_ok "Berhasil memasang paket yang dibutuhkan"
 }
@@ -111,11 +112,11 @@ clear
 function dir_xray() {
     print_install "Membuat direktori xray"
     mkdir -p /etc/{xray,vmess,websocket,vless,trojan,shadowsocks}
-    mkdir -p /usr/sbin/xray/
+    # mkdir -p /usr/sbin/xray/
     mkdir -p /var/log/xray/
     mkdir -p /var/www/html/
     mkdir -p /etc/rizkihdyt/
-    chmod +x /var/log/xray
+    # chmod +x /var/log/xray
     touch /var/log/xray/{access.log,error.log}
     chmod 777 /var/log/xray/*.log
     touch /etc/vmess/.vmess.db
@@ -128,30 +129,69 @@ function dir_xray() {
 
 ### Tambah domain
 function add_domain() {
-    echo "`cat /etc/banner`" | lolcat
-    echo -e "${red}    ♦️${NC} ${green} CUSTOM SETUP DOMAIN VPS     ${NC}"
-    echo -e "${red}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
-    echo "1. Use Domain From Script / Gunakan Domain Dari Script"
-    echo "2. Choose Your Own Domain / Pilih Domain Sendiri"
-    echo -e "${red}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
-    read -rp "Choose Your Domain Installation : " dom 
+    ns_domain_cloudflare1() {
+apt install jq curl -y
+echo -e ""
+echo -e "jangan karakter singkat seperti: sg, id, hk,"
+echo -e "kalau bisa 1 kata yang unik dengan dikombinasikan dengan angka"
+echo -e "contoh: resa11"
+echo -e ""
+echo -e "\e[32msubdomain\e[0m.rizkishope.my.id"
+read -p "Mau subdomain apa?( 1kata ) : " sub
+if [[ $sub == "" ]]; then
+clear
+echo -e "${EROR} No Input Detected !"
+exit 1
+fi
+DOMAIN=rizkishope.my.id
+#sub=$(</dev/urandom tr -dc a-z0-9 | head -c4)
+echo $sub > /root/cfku
+SUB_DOMAIN=${sub}.rizkishope.my.id
+CF_ID=rizkihdyt6@gmail.com
+CF_KEY=15c999c8f900f4d36851f95d05f9c34b9130a
+echo "rizkishope.my.id" > /root/domain
+echo $SUB_DOMAIN > /root/domain
 
-    if test $dom -eq 1; then
-    clear
-    wget -q -O /root/cf "${CDNF}/cf" >/dev/null 2>&1
-    chmod +x /root/cf
-    bash /root/cf | tee /root/install.log
-    print_success "DomainAll"
-    elif test $dom -eq 2; then
-    read -rp "Enter Your Domain : " domen 
-    echo $domen > /root/domain
-    cp /root/domain /etc/xray/domain
-    else 
-    echo "Not Found Argument"
-    exit 1
-    fi
-    echo -e "${GREEN}Done!${NC}"
-    sleep 2
+set -euo pipefail
+IP=$(wget -qO- ipinfo.io/ip);
+echo "Record DNS ${SUB_DOMAIN}..."
+ZONE=$(curl -sLX GET "https://api.cloudflare.com/client/v4/zones?name=${DOMAIN}&status=active" \
+     -H "X-Auth-Email: ${CF_ID}" \
+     -H "X-Auth-Key: ${CF_KEY}" \
+     -H "Content-Type: application/json" | jq -r .result[0].id)
+
+RECORD=$(curl -sLX GET "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records?name=${SUB_DOMAIN}" \
+     -H "X-Auth-Email: ${CF_ID}" \
+     -H "X-Auth-Key: ${CF_KEY}" \
+     -H "Content-Type: application/json" | jq -r .result[0].id)
+
+if [[ "${#RECORD}" -le 10 ]]; then
+     RECORD=$(curl -sLX POST "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records" \
+     -H "X-Auth-Email: ${CF_ID}" \
+     -H "X-Auth-Key: ${CF_KEY}" \
+     -H "Content-Type: application/json" \
+     --data '{"type":"A","name":"'${SUB_DOMAIN}'","content":"'${IP}'","ttl":120,"proxied":false}' | jq -r .result.id)
+fi
+
+RESULT=$(curl -sLX PUT "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records/${RECORD}" \
+     -H "X-Auth-Email: ${CF_ID}" \
+     -H "X-Auth-Key: ${CF_KEY}" \
+     -H "Content-Type: application/json" \
+     --data '{"type":"A","name":"'${SUB_DOMAIN}'","content":"'${IP}'","ttl":120,"proxied":false}')
+echo "Host : $SUB_DOMAIN"
+echo $SUB_DOMAIN > /root/domain
+cp /root/domain /etc/xray/domain
+
+echo "Host : $SUB_DOMAIN"
+sleep 1
+yellow() { echo -e "\\033[33;1m${*}\\033[0m"; }
+yellow "Domain added.."
+sleep 3
+echo "$SUB_DOMAIN" > /etc/xray/domain
+echo -e ""
+echo -e "subdomainmu telah jadi yaitu: $SUB_DOMAIN"
+}
+ns_domain_cloudflare1
     clear
 }
 
@@ -179,18 +219,16 @@ function install_xray(){
     print_install "Memasang modul Xray terbaru"
     curl -s ipinfo.io/city >> /etc/xray/city
     curl -s ipinfo.io/org | cut -d " " -f 2-10 >> /etc/xray/isp
-    xray_latest="$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases | grep tag_name | sed -E 's/.*"v(.*)".*/\1/' | head -n 1)"
-    xraycore_link="https://github.com/XTLS/Xray-core/releases/download/v$latest_version/xray-linux-64.zip"
-    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u www-data --version $latest_version >/dev/null 2>&1
-    cd `mktemp -d`
-    curl -sL "$xraycore_link" -o xray.zip
-    unzip -q xray.zip && rm -rf xray.zip
+    xray_latest="$(curl -s https://api.github.com/repos/dharak36/Xray-core/releases | grep tag_name | sed -E 's/.*"v(.*)".*/\1/' | head -n 1)"
+    xraycore_link="https://github.com/dharak36/Xray-core/releases/download/v$xray_latest/xray.linux.64bit"
+    curl -sL "$xraycore_link" -o xray
+    # > unzip -q xray.zip && rm -rf xray.zip
     mv xray /usr/sbin/xray
     print_success "Xray Core"
     
     cat /etc/xray/xray.crt /etc/xray/xray.key | tee /etc/haproxy/xray.pem
     wget -O /etc/xray/config.json "${REPO}xray/config.json" >/dev/null 2>&1 
-    wget -O /usr/sbin/xray/ "${REPO}bin/xray" >/dev/null 2>&1
+    #wget -O /usr/sbin/xray/ "${REPO}bin/xray" >/dev/null 2>&1
     wget -O /usr/sbin/websocket "${REPO}bin/ws" >/dev/null 2>&1
     wget -O /etc/websocket/tun.conf "${REPO}xray/tun.conf" >/dev/null 2>&1 
     wget -O /etc/systemd/system/ws.service "${REPO}xray/ws.service" >/dev/null 2>&1 
@@ -263,7 +301,7 @@ function download_config(){
     wget -O /etc/nginx/conf.d/geostore.conf "${REPO}config/geovpn.conf" >/dev/null 2>&1
     sed -i "s/xxx/${domain}/g" /etc/nginx/conf.d/geostore.conf
     wget -O /etc/nginx/nginx.conf "${REPO}config/nginx.conf" >/dev/null 2>&1
-    # curl "${REPO}caddy/install.sh" | bash 
+    # > curl "${REPO}caddy/install.sh" | bash 
     wget -q -O /etc/squid/squid.conf "${REPO}config/squid.conf" >/dev/null 2>&1
     echo "visible_hostname $(cat /etc/xray/domain)" /etc/squid/squid.conf
     mkdir -p /var/log/squid/cache/
@@ -298,15 +336,21 @@ menu
 EOF
 
 cat >/etc/cron.d/xp_all <<EOF
-SHELL=/bin/sh
+SHELL=/sbin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-2 0 * * * root /usr/bin/xp
+1 0 * * * root /usr/sbin/xp
+EOF
+
+cat >/etc/cron.d/clearlog_all <<EOF
+SHELL=/sbin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+10 */6 * * * root /usr/sbin/clearlog
 EOF
 
 chmod 644 /root/.profile
 
 cat >/etc/cron.d/daily_reboot <<EOF
-SHELL=/bin/sh
+SHELL=/sbin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 0 5 * * * root /sbin/reboot
 EOF
@@ -419,10 +463,10 @@ touch /root/.install.log
 cat >/root/tmp <<-END
 #!/bin/bash
 #vps
-### Geostoretunnel $TANGGAL $MYIP
+### RizkiHdytstoreVPN $TANGGAL $MYIP
 END
 ####
-GEOPROJECT() {
+RIZKIHDYTPROJECT() {
     data=($(cat /root/tmp | grep -E "^### " | awk '{print $2}'))
     for user in "${data[@]}"; do
         exp=($(grep -E "^### $user" "/root/tmp" | awk '{print $3}'))
@@ -496,7 +540,7 @@ function finish(){
 "
     curl -s --max-time $TIMES -d "chat_id=$CHATID&disable_web_page_preview=1&text=$TEXT&parse_mode=html" $URL >/dev/null
     cp /etc/openvpn/*.ovpn /var/www/html/
-    # sed -i "s/xxx/${domain}/g" /var/www/html/index.html
+    # > sed -i "s/xxx/${domain}/g" /var/www/html/index.html
     sed -i "s/xxx/${domain}/g" /etc/haproxy/haproxy.cfg
     sed -i "s/xxx/${MYIP}/g" /etc/squid/squid.conf
     chown -R www-data:www-data /etc/msmtprc
@@ -556,7 +600,7 @@ echo ""
 
 }
 cd /tmp
-GEOPROJECT
+RIZKIHDYTPROJECT
 first_setup
 dir_xray
 add_domain
